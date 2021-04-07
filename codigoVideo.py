@@ -54,52 +54,52 @@ while(cap.isOpened()):
 size_largura = size_x_matrix(pixels[0])     #pegar altura e largura do video
 size_altura = size_y_matrix(pixels[0])     
 
-#p1 = []
-#amplified = []
-#tempo = np.linspace(0, lenpath, num=lenpath, endpoint=True, dtype=int)
+p1 = []
+amplified = []
+tempo = np.linspace(0, lenpath, num=lenpath, endpoint=True, dtype=int)
 
-#ANALISE GRÁFICA DO COMPORTAMENTO DE UM PIXEL PARA DEFINIR FATOR DE AMPLIACAO
-# for i in range(len(tempo)):
-#     p1.append(int(pixels[i][300][400]))
-# p1 = np.array(p1)
+ANALISE GRÁFICA DO COMPORTAMENTO DE UM PIXEL PARA DEFINIR FATOR DE AMPLIACAO
+for i in range(len(tempo)):
+    p1.append(int(pixels[i][300][400]))
+p1 = np.array(p1)
 
-# for x in range(len(tempo)):
-#     if(x == 0):
-#         amplified.append(p1[x])
-#     else:
-#         if(p1[x] == p1[x-1]):
-#             amplified.append(amplified[x - 1])
-#         else:
-#             print('FRAME')
-#             print(x)
-#             if(p1[x] > p1[x - 1]):
-#                 print('fator')
-#                 delta = p1[x] - p1[x-1]
-#                 print(delta)
-#                 print('fator multiplicado')
-#                 delta = 5 * delta
-#                 print(delta)
-#                 if((amplified[x-1] + delta)>255):
-#                     amplified.append(255)
-#                 else:
-#                     amplified.append(amplified[x-1] + delta)
-#             else:
-#                 print('fator')
-#                 delta = p1[x-1] - p1[x]
-#                 print(delta)
-#                 print('fator multiplicado')
-#                 delta = 5 * delta
-#                 print(delta)
-#                 if((amplified[x-1] - delta)<0):
-#                     amplified.append(0)
-#                 else:
-#                     amplified.append(amplified[x-1] - delta)
+for x in range(len(tempo)):
+    if(x == 0):
+        amplified.append(p1[x])
+    else:
+        if(p1[x] == p1[x-1]):
+            amplified.append(amplified[x - 1])
+        else:
+            print('FRAME')
+            print(x)
+            if(p1[x] > p1[x - 1]):
+                print('fator')
+                delta = p1[x] - p1[x-1]
+                print(delta)
+                print('fator multiplicado')
+                delta = 5 * delta
+                print(delta)
+                if((amplified[x-1] + delta)>255):
+                    amplified.append(255)
+                else:
+                    amplified.append(amplified[x-1] + delta)
+            else:
+                print('fator')
+                delta = p1[x-1] - p1[x]
+                print(delta)
+                print('fator multiplicado')
+                delta = 5 * delta
+                print(delta)
+                if((amplified[x-1] - delta)<0):
+                    amplified.append(0)
+                else:
+                    amplified.append(amplified[x-1] - delta)
 
-# plt.figure()
-# plt.subplot(121)
-# plt.plot(tempo, p1)
-# plt.subplot(122)
-# plt.plot(tempo, amplified)
+plt.figure()
+plt.subplot(121)
+plt.plot(tempo, p1)
+plt.subplot(122)
+plt.plot(tempo, amplified)
 
 Matrix_amplified = []
 for index in range(lenpath):
