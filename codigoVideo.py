@@ -1,8 +1,8 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-
-
+import multiprocessing
+from copy import copy, deepcopy
 
 def lenght_of_video(pathVideo):          #funcao para pegar lenght do video
     cap = cv.VideoCapture(pathVideo)
@@ -83,6 +83,118 @@ def show_video(video, lenapath):
         k = cv.waitKey(30)
         if(k == 33):
             break
+
+def wrapper_simple(Original, amp, largura, length, startAt, altura, i):
+    Amplified = np.array(deepcopy(Original))
+    for index_height in range(startAt, altura):
+        for index_width in range(largura):
+            for index_frame in range(length):
+                value = int(Original[index_frame][index_height][index_width])
+                prevalue = int(Original[index_frame - 1][index_height][index_width])
+                if(value != prevalue):
+                    dif = value - prevalue
+                    dif = 5*dif    
+                    if(dif > 0):
+                        value =  value + dif
+                        if(value > 255):
+                            value = 255
+                        Amplified[index_frame][index_height][index_width] = value
+                    else:
+                        value = value + dif
+                        if(value < 0):
+                            value = 0
+                        Amplified[index_frame][index_height][index_width] = value
+                else:
+                    Amplified[index_frame][index_height][index_width] = Amplified[index_frame - 1][index_height][index_width]
+    amp[i] = Amplified[ : , startAt:altura, : ]
+
+def wrapper_lowF(Original, amp, largura, length, startAt, altura, i):
+    Amplified = np.array(deepcopy(Original))
+    for index_height in range(startAt, altura):
+        for index_width in range(largura):
+            for index_frame in range(length):
+                value = int(Original[index_frame][index_height][index_width])
+                prevalue = int(Original[index_frame - 1][index_height][index_width])
+                if(value != prevalue):
+                    dif = value - prevalue
+                    if(dif < 4 and dif > -4):
+                        dif = 5*dif    
+                    if(dif > 0):
+                        value =  value + dif
+                        if(value > 255):
+                            value = 255
+                        Amplified[index_frame][index_height][index_width] = value
+                    else:
+                        value = value + dif
+                        if(value < 0):
+                            value = 0
+                        Amplified[index_frame][index_height][index_width] = value
+                else:
+                    Amplified[index_frame][index_height][index_width] = Amplified[index_frame - 1][index_height][index_width]
+    amp[i] = Amplified[ : , startAt:altura, : ]
+
+def wrapper_highF(Original, amp, largura, length, startAt, altura, i):
+    Amplified = np.array(deepcopy(Original))
+    for index_height in range(startAt, altura):
+        for index_width in range(largura):
+            for index_frame in range(length):
+                value = int(Original[index_frame][index_height][index_width])
+                prevalue = int(Original[index_frame - 1][index_height][index_width])
+                if(value != prevalue):
+                    dif = value - prevalue
+                    if(dif > 4 or dif < -4):
+                        dif = 5*dif    
+                    if(dif > 0):
+                        value =  value + dif
+                        if(value > 255):
+                            value = 255
+                        Amplified[index_frame][index_height][index_width] = value
+                    else:
+                        value = value + dif
+                        if(value < 0):
+                            value = 0
+                        Amplified[index_frame][index_height][index_width] = value
+                else:
+                    Amplified[index_frame][index_height][index_width] = Amplified[index_frame - 1][index_height][index_width]
+    amp[i] = Amplified[ : , startAt:altura, : ]
+
+def multi_amplify(wrapper, Original, length, altura, largura):
+    Amplification = []
+    for index in range(length):
+        Amplification.append(Original[index].copy())
+    
+    manager1 = multiprocessing.Manager()
+    ampList = manager1.list()
+
+    jobs = []
+    altura = int(altura / 4)
+    for i in range(4):
+        ampList.append([])
+        p = multiprocessing.Process(target=wrapper, args=(Original, ampList, largura, length, i*altura, (i+1)*altura, i))
+        jobs.append(p)
+        p.start()
+
+    for j in jobs:
+        j.join()
+
+    Amplification = np.array(Amplification)
+    Amplification[:,0:altura,:] = ampList[0]
+    Amplification[:,altura:2*altura,:] = ampList[1]
+    Amplification[:,2*altura:3*altura,:] = ampList[2]
+    Amplification[:,3*altura:4*altura,:] = ampList[3]
+
+    return Amplification
+
+def multi_amplify_video_highF(Original, length, altura, largura):
+    return multi_amplify(wrapper_highF, Original, length, altura, largura)
+
+    
+def multi_amplify_video_lowF(Original, length, altura, largura):
+    return multi_amplify(wrapper_lowF, Original, length, altura, largura)
+
+    
+def multi_simple_amplify(Original, length, altura, largura):
+    return multi_amplify(wrapper_simple, Original, length, altura, largura)
 
 def amplify_video_highF(Original, lenpath, altura, largura):
     Amplified = []
@@ -200,3 +312,10 @@ pixels = get_matrix_imgs(path)              #LISTA DE MATRIZ DE CADA FRAME
 size_largura = size_x_matrix(pixels[0])     #pegar altura e largura do video
 size_altura = size_y_matrix(pixels[0])
 p1 = get_frame(pixels, lenpath, 20, 20)
+original = get_matrix_imgs(path)
+amp = simple_amplify(original,lenpath,size_altura, size_largura)
+amplifiedLow = amplify_video_lowF(original,lenpath,size_altura, size_largura)
+show_video(original, lenpath)
+show_video(amp, lenpath)
+cv.destroyAllWindows()
+show_video(amplifiedLow, lenpath)
