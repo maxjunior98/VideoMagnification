@@ -313,7 +313,7 @@ size_largura = size_x_matrix(pixels[0])     #pegar altura e largura do video
 size_altura = size_y_matrix(pixels[0])
 p1 = get_frame(pixels, lenpath, 20, 20)
 original = get_matrix_imgs(path)
-amp = simple_amplify(original,lenpath,size_altura, size_largura)
+amp = multi_amplify_video_highF(original,lenpath,size_altura, size_largura)
 amplifiedLow = amplify_video_lowF(original,lenpath,size_altura, size_largura)
 show_video(original, lenpath)
 show_video(amp, lenpath)
