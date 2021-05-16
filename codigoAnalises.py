@@ -44,9 +44,23 @@ def show_video(video, lenapath):
         
 def average_list(lst):
     return sum(lst)/len(lst)
-        
+       
+def Accuracy(Original, Resultado):
+    var = 0
+    for i in range(len(Original)):
+        if(Original[i] == Resultado[i]):
+            var = var + 1
+    var = var/len(Original)
+    return var
 
-path = './results/ka3c2result1.avi'
+def export_new_video(name, size_wid, size_hei, matrix_list, lenpath):
+    out = cv.VideoWriter(name, cv.VideoWriter_fourcc('M','J','P','G'), 30, (size_wid, size_hei), 0)
+    for i in range(lenpath):
+        out.write(matrix_list[i])
+    out.release()
+
+
+path = '../results/Apenas Regiao do Motor/ka1motor_magnification.avi'
 lenpath = lenght_of_video(path)         #lenght do video
 fpsVideo = get_fps(path)                #frames per second do video      
 pixels = get_matrix_imgs(path)              #LISTA DE MATRIZ DE CADA FRAME
@@ -136,7 +150,8 @@ FreqR2 = []
 FreqR3 = []
 FreqR4 = []
 FreqR5 = []
-k = 10
+k = 5
+Data = []
 while(idx < lenpath):
     if(idx+k >= lenpath):
         v = np.abs(np.fft.fft(MediaR1[idx:lenpath-1])).mean()
@@ -149,7 +164,6 @@ while(idx < lenpath):
         FreqR4.append(v)
         v = np.abs(np.fft.fft(MediaR5[idx:lenpath-1])).mean()
         FreqR5.append(v)
-        idx = idx + k
     else:    
         v = np.abs(np.fft.fft(MediaR1[idx:idx+k-1])).mean()
         FreqR1.append(v)
@@ -161,18 +175,22 @@ while(idx < lenpath):
         FreqR4.append(v)
         v = np.abs(np.fft.fft(MediaR5[idx:idx+k-1])).mean()
         FreqR5.append(v)
-        idx = idx + k
+    if(idx < max_value_index and idx+k < max_value_index):
+        Data.append(0)
+    else:
+        Data.append(1)
+    idx = idx + k
         
 FreqR1 = np.array(FreqR1)
 FreqR2 = np.array(FreqR2)
 FreqR3 = np.array(FreqR3)
 FreqR4 = np.array(FreqR4)
 FreqR5 = np.array(FreqR5)
-Fator1 = FreqR1.mean() - 0.2*np.std(FreqR1)
-Fator2 = FreqR2.mean() - 0.25*np.std(FreqR2)
-Fator3 = FreqR3.mean() - 0.3*np.std(FreqR3)
-Fator4 = FreqR4.mean() - 0.25*np.std(FreqR4)
-Fator5 = FreqR5.mean() - 0.2*np.std(FreqR5)
+Fator1 = FreqR1.mean() - 0.6*np.std(FreqR1)
+Fator2 = FreqR2.mean() - 0.6*np.std(FreqR2)
+Fator3 = FreqR3.mean() - 0.6*np.std(FreqR3)
+Fator4 = FreqR4.mean() - 0.6*np.std(FreqR4)
+Fator5 = FreqR5.mean() - 0.6*np.std(FreqR5)
         
 Result = []
 for j in range(len(FreqR1)):
@@ -217,8 +235,11 @@ while(j<lenpath):
     i = i + 1
     j = j + k
 
-for j in range(max_value_index-10, max_value_index+11):
-    VideoClassificado[j][0:50,:] = 127
+ResPrecisao = Accuracy(Data, Result)
+
+
+# for j in range(max_value_index-10, max_value_index+11):
+#     VideoClassificado[j][0:50,:] = 127
                 
 
 
