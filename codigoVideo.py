@@ -1,8 +1,9 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-
-
+import multiprocessing
+from copy import copy, deepcopy
+import time
 
 def lenght_of_video(pathVideo):          #funcao para pegar lenght do video
     cap = cv.VideoCapture(pathVideo)
@@ -167,6 +168,58 @@ def video_magnification(Original, lenpath, altura_inicial, altura_final, largura
                 else:
                     Amplified[index_frame][index_height][index_width] = Original[index_frame - 1][index_height][index_width]
     return Amplified
+
+
+def wrapper_magnification(Original, amp, largura, length, startAt, altura, i):
+    Amplified = np.array(deepcopy(Original))
+
+    for index_height in range(startAt, altura):
+        for index_width in range(largura):
+            for index_frame in range(length):
+                value = int(Original[index_frame][index_height][index_width])
+                prevalue = int(Original[index_frame - 1][index_height][index_width])
+                if(value != prevalue):
+                    dif = value - prevalue
+                    if(np.abs(dif)> 4):
+                        dif = 10*dif
+                        value = value + dif
+                        if(value > 255):
+                            value = 255
+                        elif(value < 0):
+                            value = 0
+                        Amplified[index_frame][index_height][index_width] = value
+                    else:
+                        Amplified[index_frame][index_height][index_width] = Original[index_frame][index_height][index_width]
+                else:
+                    Amplified[index_frame][index_height][index_width] = Original[index_frame - 1][index_height][index_width]
+    
+    amp[i] = Amplified[ : , startAt:altura, : ]
+
+def multi_amplify(Original, length, altura_inicial, altura_final , largura, processes = 4):
+    Amplification = []
+    for index in range(length):
+        Amplification.append(Original[index].copy())
+    
+    manager1 = multiprocessing.Manager()
+    ampList = manager1.list()
+
+    jobs = []
+    altura = int((altura_final - altura_inicial) / processes)
+    for i in range(processes):
+        ampList.append([])
+        p = multiprocessing.Process(target=wrapper_magnification, args=(Original, ampList, largura, length, 
+                                    altura_inicial + i*altura, altura_inicial + (i+1)*altura, i))
+        jobs.append(p)
+        p.start()
+
+    for j in jobs:
+        j.join()
+
+    Amplification = np.array(Amplification)
+    for  i in range(processes):
+        Amplification[:,altura_inicial + i*altura : altura_inicial + (i+1)*altura,:] = ampList[i]
+
+    return Amplification
         
 def export_new_video(name, size_wid, size_hei, matrix_list, lenpath):
     out = cv.VideoWriter(name, cv.VideoWriter_fourcc('M','J','P','G'), 30, (size_wid, size_hei), 0)
@@ -178,7 +231,7 @@ def average_list(lst):
     return sum(lst)/len(lst)
     
 
-path = './BaseVideos/saveiro2.mp4'
+path = './BaseVideos/renegade2020.mp4'
 lenpath = lenght_of_video(path)             #lenght do video
 fpsVideo = get_fps(path)                    #frames per second do video      
 pixels = get_matrix_imgs(path)              #LISTA DE MATRIZ DE CADA FRAME
@@ -216,8 +269,32 @@ Motor_Region = []
 for i in range(lenpath):
     Motor_Region.append(pixels[i][altura_motor-150:altura_motor+150,:])
 
+#print(altura_motor +150 - altura_motor -150)
 #result = video_magnification(pixels, lenpath, altura_motor - 150, altura_motor + 150, size_largura)
+t0 = time.time()
+result = video_magnification(pixels, lenpath, altura_motor - 150, altura_motor + 150, size_largura)
+t1 = time.time()
+total1 = t1 - t0
 
+t0 = time.time()
+result = multi_amplify(pixels, lenpath, altura_motor - 150, altura_motor + 150, size_largura, 2)
+t1 = time.time()
+total2 = t1 - t0
+
+t0 = time.time()
+result = multi_amplify(pixels, lenpath, altura_motor - 150, altura_motor + 150, size_largura, 3)
+t1 = time.time()
+total3 = t1 - t0
+
+t0 = time.time()
+result = multi_amplify(pixels, lenpath, altura_motor - 150, altura_motor + 150, size_largura, 4)
+t1 = time.time()
+total4 = t1 - t0
+
+print(total1)
+print(total2)
+print(total3)
+print(total4)
 
 # smo = smoothing(pixels, lenpath)
 
